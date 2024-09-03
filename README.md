@@ -33,10 +33,10 @@ The getCatsInfo API works fine for the first few requests, but after a few reque
 
 
 ### Task 2 - Add correlationId header to all the requests and response
-In order to track the requests, we would need a correlationId header in all the requests and response. 
+In order to track the requests, we would need a correlationId header in all the requests and response.
 - Validate every incoming request
 - Since the users of the API can pass correlationId header, if its passed use that, else generate a new id
-- Add the correlationId header to response headers as well. 
+- Add the correlationId header to response headers as well.
 - Document the list of files changed in the README.md.
 
 ## Accepentance Criteria
@@ -55,11 +55,11 @@ In order to track the requests, we would need a correlationId header in all the 
         - Updated response to track correlationId and send back to parent with requested API data
 
 # Solution + Suggestions:
-    - correlationId is requested in the header to track/log all the incoming requests and reply with the same correlationId. To do this we will need to add a 'onRequest' hook. 
-        According to Fastify's documentation it looks like the 'onRequest' hook is called as soon as Fastify receives the request, before any other processing takes place. 
+    - correlationId is requested in the header to track/log all the incoming requests and reply with the same correlationId. To do this we will need to add a 'onRequest' hook.
+        According to Fastify's documentation it looks like the 'onRequest' hook is called as soon as Fastify receives the request, before any other processing takes place.
         If the correlationId is present we will attach it to the response header.
         If the correlationId is NOT present we will generate it using uuid library and attach it to the header.
-        The correlationId will be passed to the API calls (/getCatsInfo, /getDogsInfo) to track the response. 
+        The correlationId will be passed to the API calls (/getCatsInfo, /getDogsInfo) to track the response.
 
 # Todo: (ALL COMPLETE - EXCEPT MOCHA CHAI TESTING)
     - Creat fastify 'onRequest' hook in index.js
@@ -70,8 +70,54 @@ In order to track the requests, we would need a correlationId header in all the 
             attach to response header
     - For getCatsInfo route send correlationId to getCatsWorker.
     - For getDogsInfo route send correlationId to getDogsWorker.
-    
+
     - In getCatsInfo.js include correlationId in the API response and the error handling
     - In getDogsInfo.js include correlationId in the API response and the error handling
 
     - Add Mocha Chai auto testing if I have time
+
+
+
+
+### Task 3 - Terminate the idle worker and recreate when needed
+Worker threads are used to process the requests. If the worker thread is idle i.e., any API haven't received the requests in last 15 minutes, it should be terminated. Generate a new worker when a new request comes.
+- Implement the logic to terminate the worker thread if it is idle for 15 minutes.
+- Create a new worker thread whenever a new request comes.
+- Log the worker thread termination and creation in the console.
+
+## Accepentance Criteria
+- Worker thread should be terminated if it is idle for 15 minutes.
+- Whenever a new request comes, a new worker thread should be created.
+- Logs should be printed in the console for worker thread termination and creation.
+- Explain the approach and document the list of files changed in the README.md
+
+# Changes Made:
+    - index.js
+        - /getCatsInfo
+        - /getDogsInfo
+    - generateNewWorker.js
+        - Added 'terminateIdleWorkers' inside 'generateNewWorker' function with setInterval to repeatedly check if worker needs to be terminated.
+        - Added 'lastActivity' property to monitor worker idletime.
+        - Added logic to clear setInterval after worker is terminated.
+        - Added logs for when worker is created or terminated.
+
+# Solution + Suggestions:
+    - The request is to terminate a worker thread if it's been idle for 15 minutes. To do this we will set an interval in generateNewWorker function to run every few minutes to check workers idletime.
+        If the worker has been idle for 15 minutes or longer we'll use worker.terminate() and kill the thread. We will need to add a property to the worker to monitor its idle time.
+        On creation of the worker or when the worker is used (/getCatsInfo or /getDogsInfo routes are used) we'll update/refresh the idle time.
+        After a worker is terminated we'll need to make sure the setInterval is cleared to prevent an infinite loop.
+        If the route is used after the worker is terminated, we will need to create the worker again. This logic will probably have to be in index.js
+        Finally, we'll need to log the creation and termination of all workers.
+
+# Todo: (ALL COMPLETE)
+    - index.js
+        - /getCatsInfo route check to see if worker has been terminated (getCatsWorker.threadId === -1) then generateNewWorker('getCatsWorker');
+        - /getDogsInfo route check to see if worker has been terminated (getDogsWorker.threadId === -1) then generateNewWorker('getDogsWorker');
+    generateNewWorker.js
+        - Log the creation of a new worker in console.
+        - Create lastActivity property for worker and set to Date.now()
+        - Every time worker receives message update lastActivity property to refresh idletime
+        - Create terminateIdleWOrkers function to terminate workers that have been idle for >= 15 mins.
+            - Create logic in terminateIdleWOrkers to use setInterval and check if worker needes to be terminated every (1 minute?).
+            - Log the termination of a worker in console.
+        - Create logic for worker on 'exit' to clear setInterval after worker is terminated to prevent the logic running even after worker.terminate().
