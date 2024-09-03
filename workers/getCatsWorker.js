@@ -48,9 +48,9 @@ const handleMessage = async (data) => {
 parentPort.on('message', async (message) => {
   try {
     const response = await handleMessage(message);
-    parentPort.postMessage({ response, requestId: message.requestId });
+    parentPort.postMessage({ response, requestId: message.requestId, correlationId: message.correlationId });
   } catch (error) {
     console.log('handleResponse error:', error)
-    parentPort.postMessage({ response: 'error response from worker1', requestId: message.requestId, });
+    parentPort.postMessage({ response: 'error response from getCatsWorker', requestId: message.requestId, correlationId: message.correlationId});
   }
 });

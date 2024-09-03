@@ -28,3 +28,50 @@ The getCatsInfo API works fine for the first few requests, but after a few reque
 # Todo:
     - Uncomment setInterval(() => refreshToken(data), 5000);  inside generateToken function
         - Commented because it's easier to work on the next tasks
+
+
+
+
+### Task 2 - Add correlationId header to all the requests and response
+In order to track the requests, we would need a correlationId header in all the requests and response. 
+- Validate every incoming request
+- Since the users of the API can pass correlationId header, if its passed use that, else generate a new id
+- Add the correlationId header to response headers as well. 
+- Document the list of files changed in the README.md.
+
+## Accepentance Criteria
+- All the requests and response should have correlationId header.
+- Document the list of files changed in the README.md
+
+# Changes Made:
+    - package.json
+        - Added dependency on uuid package.
+    - index.js
+        - Added fastify onRequest hook and logic to attach correlationId to response header + Generate new correlationId if needed.
+        - Updated routes to pass correlationId to worker.
+    - getCatsWorker.js
+        - Updated response to track correlationId and send back to parent with requested API data
+    - getDogsWOrker.js
+        - Updated response to track correlationId and send back to parent with requested API data
+
+# Solution + Suggestions:
+    - correlationId is requested in the header to track/log all the incoming requests and reply with the same correlationId. To do this we will need to add a 'onRequest' hook. 
+        According to Fastify's documentation it looks like the 'onRequest' hook is called as soon as Fastify receives the request, before any other processing takes place. 
+        If the correlationId is present we will attach it to the response header.
+        If the correlationId is NOT present we will generate it using uuid library and attach it to the header.
+        The correlationId will be passed to the API calls (/getCatsInfo, /getDogsInfo) to track the response. 
+
+# Todo: (ALL COMPLETE - EXCEPT MOCHA CHAI TESTING)
+    - Creat fastify 'onRequest' hook in index.js
+        if(request.headers.correlationId)
+            attach to response header
+        else
+            generate correlationId using uuid
+            attach to response header
+    - For getCatsInfo route send correlationId to getCatsWorker.
+    - For getDogsInfo route send correlationId to getDogsWorker.
+    
+    - In getCatsInfo.js include correlationId in the API response and the error handling
+    - In getDogsInfo.js include correlationId in the API response and the error handling
+
+    - Add Mocha Chai auto testing if I have time

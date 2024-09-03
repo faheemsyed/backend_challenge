@@ -6,9 +6,13 @@ const mockFetch = require('../utils/mockFetch');
 */
 const handleResponse = async (message) => {
   console.log('handling request to get dogs');
-  const requestId = message.requestId;
-  const response = await mockFetch('dogs');
-  parentPort.postMessage({ response, requestId });
+  try {
+    const response = await mockFetch('dogs');
+    parentPort.postMessage({ response, requestId: message.requestId, correlationId: message.correlationId });
+  } catch (error) {
+    console.log('handleResponse error:', error)
+    parentPort.postMessage({ response: 'error response from getDogsWorker', requestId: message.requestId, correlationId: message.correlationId});
+  }
 }
 
 /*
