@@ -5,9 +5,11 @@ const cachedTokensMap = new Map();
 
 const refreshToken = async (data) => {
   try {
-    const refreshedToken = await invokeTokenService(data.value.key);
+    //console.log('***REFRESHING TOKEN');
+    const refreshedToken = await invokeTokenService(data.key); // Changed data.value.key to data.key this fixed the connection reset issue.
     cachedTokensMap.set(data.key, { token:refreshedToken });
   } catch (error) {
+    console.log('Error refreshing token:', error);
     throw error;
   }
 }
@@ -20,7 +22,8 @@ const generateToken = async (data) => {
   if (!cachedTokensMap.has(data.key)) {
     const token = await invokeTokenService(data.key);
     cachedTokensMap.set(data.key, { token });
-    setTimeout(() => refreshToken(data), 5000);
+    // Use setInterval to refresh the token every 5 seconds instead of setTimeout
+    setInterval(() => refreshToken(data), 5000);
     return token;
   } else {
     return cachedTokensMap.get(data.key).token;
