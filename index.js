@@ -36,3 +36,5 @@ fastify.listen({ port: 3000 }, (err) => {
     process.exit(1);
   }
 });
+
+// checking to see if github is setup correctly
